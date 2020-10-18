@@ -1,0 +1,174 @@
+substitutions:
+  devicename: awningcontrol
+  
+esphome:
+  name: $devicename
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include .base.yaml
+<<: !include .sensor.yaml
+
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+# Pin map for awning
+#D0: 
+#MCP0: awning_closed_sensor
+#MCP1: awning_open_sensor
+#D3: out_pwm
+#D4: in_pwm
+#MCP2: out_button
+#MCP3: in_button
+#MCP7: awning_power
+#MCP6: motor_enable
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: True
+
+# Example configuration entry
+mcp23008:
+  - id: 'mcp23008_hub'
+    address: 0x20
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      mcp23008: mcp23008_hub
+      # Use pin number 0
+      number: 0
+      # One of INPUT or INPUT_PULLUP
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Awning Closed Sensor"
+    device_class: opening
+    id: awning_closed_sensor
+  - platform: gpio
+    pin:
+      mcp23008: mcp23008_hub
+      # Use pin number 1
+      number: 1
+      # One of INPUT or INPUT_PULLUP
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Awning Open Sensor"
+    device_class: opening
+    id: awning_open_sensor
+  - platform: gpio
+    pin:
+      mcp23008: mcp23008_hub
+      # Use pin number 2
+      number: 2
+      # One of INPUT or INPUT_PULLUP
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Awning Out"
+    id: out_button
+    on_press:
+        then:
+        - if:
+            condition:
+              binary_sensor.is_off: awning_open_sensor
+            then:
+              - cover.open: awning_cover
+            else:
+              - cover.stop: awning_cover
+    on_release:
+      - cover.stop: awning_cover
+  - platform: gpio
+    pin:
+      mcp23008: mcp23008_hub
+      # Use pin number 3
+      number: 3
+      # One of INPUT or INPUT_PULLUP
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Awning In"
+    id: in_button
+    on_press:
+        then:
+        - if:
+            condition:
+              binary_sensor.is_off: awning_closed_sensor
+            then:
+              - cover.close: awning_cover
+            else:
+              - cover.stop: awning_cover
+    on_release:
+      - cover.stop: awning_cover
+
+output:
+  - platform: esp8266_pwm
+    pin: D5
+    frequency: 1000 Hz
+    id: out_pwm
+  - platform: esp8266_pwm
+    pin: D6
+    frequency: 1000 Hz
+    id: in_pwm
+
+switch:
+  - platform: gpio
+    pin:
+      mcp23008: mcp23008_hub
+      # Use pin number 7
+      number: 7
+      inverted: True
+      mode: OUTPUT
+    name: "Awning power"
+    icon: "mdi:power-plug"
+    id: awning_power
+  - platform: gpio
+    pin: 
+      mcp23008: mcp23008_hub
+      # Use pin number 6
+      number: 6
+      mode: OUTPUT
+    name: "Motor Enable"
+    id: motor_enable
+  - platform: restart
+    name: "Awning Control Restart"
+
+cover:
+  - platform: endstop
+    name: "Deck Awning"
+    device_class: awning
+    id: awning_cover
+    open_endstop: awning_open_sensor
+    open_duration: 15s
+    close_endstop: awning_closed_sensor
+    close_duration: 20s
+    max_duration: 20s
+    open_action:
+      - switch.turn_on: awning_power
+      - switch.turn_on: motor_enable
+      - output.set_level:
+          id: out_pwm
+          level: 50%
+      # - switch.turn_off: motor_enable
+      # - switch.turn_off: awning_power
+    close_action:
+      - switch.turn_on: awning_power
+      - switch.turn_on: motor_enable
+      - output.set_level:
+          id: in_pwm
+          level: 75%
+      # - switch.turn_off: motor_enable
+      # - switch.turn_off: awning_power
+    stop_action:
+      # Turn off the motor enable first, to stop movement
+      - switch.turn_off: motor_enable
+      # Set In PWM to 0
+      - output.set_level:
+          id: in_pwm
+          level: 0%
+      # Set Out PWM to 0
+      - output.set_level:
+          id: out_pwm
+          level: 0%
+      - switch.turn_off: awning_power
+
