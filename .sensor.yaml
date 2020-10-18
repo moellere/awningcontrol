@@ -1,0 +1,6 @@
+sensor:
+  - platform: uptime
+    name: ${devicename} System Uptime
+  - platform: wifi_signal
+    name: ${devicename} WiFi Signal
+    update_interval: 15s
