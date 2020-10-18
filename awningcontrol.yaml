@@ -18,8 +18,8 @@ time:
 #D0: 
 #MCP0: awning_closed_sensor
 #MCP1: awning_open_sensor
-#D3: out_pwm
-#D4: in_pwm
+#D5: out_pwm
+#D6: in_pwm
 #MCP2: out_button
 #MCP3: in_button
 #MCP7: awning_power
