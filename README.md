@@ -6,6 +6,7 @@ Based on [ESPHome](https://esphome.io/), designed to integrate with [Home Assist
 The current hardware is a functional prototype, but the packaging is ugly and not durable.
 
 [Video](https://youtu.be/Huf7AvCcUww)
+[Updated Video](https://youtu.be/PEYggnYAj6E)
 
 **Hardware Used:**
 - [Beauty-Mark 12' Manual Retractable Awning](https://www.homedepot.com/p/Beauty-Mark-12-ft-California-DX-Model-Manual-Retractable-Awning-120-in-Projection-in-Tan-White-CAM12-DX-TW/205888522)
